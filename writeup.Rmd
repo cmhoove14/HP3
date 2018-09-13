@@ -1,0 +1,83 @@
+---
+title: "DS421"
+author: "Chris Hoover, Chippie Kislik, Kendall Calhoun, Anaya Hall"
+date: "September 13, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(rvest)
+require(urltools)
+require(stringi)
+require(tm)
+require(proxy)
+require(tidyverse)
+```
+
+# Write-up  
+
+## Comments on reproducibility  
+The access to a zenodo file which essentially contains a GitHub repository organized as a research compendium made reproducibility quite straightforward. The included README also provided a comprehensive summary of where to find and reproduce analyses and figures.
+
+## Additional analysis  
+We decided an omission from the paper was an analysis investigating the severity of the different zoonoses in terms of the magnitude of their impact on human health as an outcome. As such, we added an additional column, *severity* to their raw data file `viruses.csv` that measures on a scale of 1-5 the "stages of zoonoses" as described in [another Nature paper](https://www.nature.com/articles/nature05775). These stages range from *1:* an agent (here a virus) which is technically not zoonotic (i.e. only resides in animals) to *5:* a virus which has been transmitted from a zoonotic host but has now adapted to be explicitly transmitted between humans (i.e. HIV). While the stages don't explicitly correspond to severity, we assume they serve as a good proxy for the impact of the particular zoonosis on human health. 
+
+Actually that was going to take too long to manually code hundreds of viruses, so instead we found a [function which returns the number of google search results](https://github.com/chrisalbon/code_r/blob/master/number-of-google-search-results.r) and use it to add a column to the data set that is the number of search results for each virus returned by google.
+
+```{r add_severity, echo = FALSE, cache = TRUE}
+#Function from chrisalbon/code_r github that returns number of google searches
+
+  google.counts<-function(s){
+    # take the variable "s" and paste it into a google search url
+    search.url<-paste("http://www.google.com/search?q=",gsub(" ","+",s),sep="")
+    # grab the html contents of the search results page
+    search.html<-getURL(search.url)
+    # format the html contents
+    parse.search<-htmlTreeParse(search.html,useInternalNodes = TRUE)
+    # find a div with the id "resultStats"
+    search.nodes<-getNodeSet(parse.search,"//div[@id='resultStats']")
+    # Take the entire tag, remove tags themselves (xmlValue), seperate every string by the spaces (strsplit), and take the second string (strsplit()[[1]][2]). 
+    search.value<-strsplit(xmlValue(search.nodes[[1]])," ",fixed=TRUE)[[1]][2]
+    # display, as numeric, the number of search results
+    return(as.numeric(gsub(",","",search.value,fixed=TRUE)))
+  }
+
+#Read viruses dataset and add google results
+virus <- read_csv("data/viruses.csv") %>% 
+  mutate(google_results = map_dbl(vVirusNameCorrected, google.counts))
+
+# Other script I tried to use that just returns top ten pages from google from 
+# https://medium.com/@curiositybits/automating-the-google-search-for-the-web-presence-of-8000-organizations-54775e9f6097  
+  
+google_top10 <- function(name){
+  
+url1 = URLencode(paste0("https://www.google.com/search?q=", name))
+ page1 <- read_html(url1)
+ results1 <- page1 %>% html_nodes("cite") %>% html_text()
+ 
+ return(results1)
+}
+
+#Boxplot of number of search results with some key pathogens labeled
+virus %>% 
+  ggplot(aes(x = as.factor(IsZoonotic), y = log(google_results))) +
+    geom_boxplot(outlier.shape = NA, width = 0.5) +  #Avoid plotting outliers twice since we're adding points below
+    geom_jitter(position = position_jitter(width = 0.1, height = 0), size = 0.1, col = "blue") +
+    labs(x = "Zoonotic", 
+         y = "log(# google search results", 
+         main = "Comparison of google results between zoonoses and non-zoonoses") +
+    theme_bw()
+
+```
+
+The boxplot shows that zoonoses tend to have more Google results, but which viruses are actually returning the most results?
+
+```{r google_top20, echo = FALSE}
+virus %>% arrange(desc(google_results)) %>% pull(vVirusNameCorrected) %>% head(20)
+```
+
+This seems about right: things like Dengue, Influenza, Yellow Fever, Zika, Measles, Mumps, Rubella, etc. are all high on the list, but there also some imposters like Catu virus and Sin Nombre that maybe just have cool names?
+
+Also thinking about this more, this variable is probably quite related to their "research effort" variable and probably isn't a great measure of severity.
