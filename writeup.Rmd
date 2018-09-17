@@ -84,7 +84,7 @@ This seems about right: things like Dengue, Influenza, Yellow Fever, Zika, Measl
 
 Also thinking about this more, this variable is probably quite related to their "research effort" variable and probably isn't a great measure of severity.
 
-```{r}
+```{r histogram of citations by host order}
 hosts <- read_csv("data/hosts.csv")
 # Plotting number of cited studies per order
 pp <- ggplot(hosts, aes(x=hOrder, y= hAllZACites, fill = hWildDomFAO)) +
