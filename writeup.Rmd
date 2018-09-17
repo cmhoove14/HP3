@@ -14,12 +14,14 @@ require(stringi)
 require(tm)
 require(proxy)
 require(tidyverse)
+library(RCurl)
+library(XML)
 ```
 
 # Write-up  
 
 ## Comments on reproducibility  
-The access to a zenodo file which essentially contains a GitHub repository organized as a research compendium made reproducibility quite straightforward. The included README also provided a comprehensive summary of where to find and reproduce analyses and figures.
+The access to a zenodo file which essentially contains a GitHub repository organized as a research compendium made reproducibility quite straightforward. The included README also provided a comprehensive summary of where to find and reproduce analyses and figures. Also, the "scripts" folder has each script used to reproduce the figures organized by number, so it is very clear which ones to run first. These scripts seemed more up-to-date than R code used from previous papers we have read in this class, and only required calling other packages a few times (for example, library(MuMIn) in 04-fit-models.R.) 
 
 ## Additional analysis  
 We decided an omission from the paper was an analysis investigating the severity of the different zoonoses in terms of the magnitude of their impact on human health as an outcome. As such, we added an additional column, *severity* to their raw data file `viruses.csv` that measures on a scale of 1-5 the "stages of zoonoses" as described in [another Nature paper](https://www.nature.com/articles/nature05775). These stages range from *1:* an agent (here a virus) which is technically not zoonotic (i.e. only resides in animals) to *5:* a virus which has been transmitted from a zoonotic host but has now adapted to be explicitly transmitted between humans (i.e. HIV). While the stages don't explicitly correspond to severity, we assume they serve as a good proxy for the impact of the particular zoonosis on human health. 
