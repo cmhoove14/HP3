@@ -7,6 +7,7 @@ library(ggplot2)
 library(viridis)
 library(knitr)
 library(svglite)
+library(MuMIn)
 P <- rprojroot::find_rstudio_root_file
 source(P("R/model_reduction.R"))
 source(P("R/fit_gam.R"))
